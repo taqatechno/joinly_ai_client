@@ -1,0 +1,27 @@
+{
+  "name": "joinly-ai-agent",
+  "version": "1.0.0",
+  "description": "Simple AI agent for Joinly meetings using OpenAI GPT",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.23",
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "ai": "^5.0.28",
+    "axios": "^1.7.9",
+    "dotenv": "^16.6.1",
+    "openai": "^4.104.0",
+    "ws": "^8.18.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
