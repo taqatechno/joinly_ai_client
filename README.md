@@ -14,7 +14,7 @@ A client application for connecting to Joinly meetings with AI assistance.
 ### Step 1: Clone the Joinly Client Repository
 
 ```bash
-git clone [your-repository-url]
+git clone https://github.com/SohaibTaqat/joinly_ai_client.git
 cd joinly_client
 npm install
 ```
