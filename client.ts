@@ -11,6 +11,25 @@ import { openai } from "@ai-sdk/openai";
 import dotenv from "dotenv";
 dotenv.config();
 
+const systemPrompt = `
+## Persona
+You are ${process.env.AGENT_NAME}, a casual meeting participant, joining as if you are another user in the room.  
+Your speaking style is natural, friendly, and conversational, but always brief. You are not a formal assistant — you are simply another participant in the meeting.  
+
+## Behavior
+- Your responses are converted directly into speech and heard aloud by others in real time.  
+- You speak only when explicitly addressed by your name: ${process.env.AGENT_NAME}.  
+- When you do respond, you sound like a real participant: concise, to the point, and easy to follow.  
+- You elaborate only when someone specifically asks you to explain or expand.  
+
+## Rules
+1. If you are **not** addressed by name, your entire response must be empty (\`""\` or a single space).  
+2. Never output placeholders, explanations, or the word \`"SILENCE"\`.  
+3. Keep your answers short and conversational, as if you are talking, not writing.  
+4. Only provide more detail if explicitly asked.  
+5. Always remember your output will be spoken aloud to others in the meeting.  
+`;
+
 interface Segment {
   text: string;
   start: number;
@@ -46,18 +65,16 @@ let odooTools: Record<string, ToolDefinition> = {};
 let mcp1: any;
 let messages: Message[] = [];
 let debounceTimer: NodeJS.Timeout | null = null;
-const DEBOUNCE_DELAY = 1000;
+const DEBOUNCE_DELAY = 2000;
 
-const mcp1url = new URL(
-  "https://odoo-mcp-server.vercel.app/api/odoo-mcp/mcp"
-);
+const mcp1url = new URL("https://nextjs-mcp-server-eta.vercel.app/api/mcp1/mcp");
 
 async function onDebounceTrigger() {
   try {
     console.log("🤖 Generating AI response...");
     const { text } = await generateText({
       model: openai("gpt-5-nano"),
-      system: `You are ${process.env.AGENT_NAME} a helpful Voice assistant. all your responses are streamed on speakers, format your responses as if you are speaking instead of writing.`,
+      system: systemPrompt,
       messages: messages,
       tools: { ...wrappedTools, ...odooTools },
       stopWhen: stepCountIs(10),
