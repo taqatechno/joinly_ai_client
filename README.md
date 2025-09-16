@@ -74,7 +74,7 @@ MEETING_URL=your_meeting_link_here
 Once everything is configured, run the client:
 
 ```bash
-npx tsx index.ts
+npx tsx client.ts
 ```
 
 ## Environment Variables
@@ -82,8 +82,8 @@ npx tsx index.ts
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `OPENAI_API_KEY` | Your OpenAI API key for AI functionality | Yes |
-| `JOINLY_URL` | The URL of your Joinly MCP server (ngrok URL + /mcp/) | No (defaults to http://localhost:8000/mcp/) |
-| `AGENT_NAME` | Name of the AI assistant | No |
+| `JOINLY_URL` | The URL of your Joinly MCP server (ngrok URL + /mcp/) | Yes |
+| `AGENT_NAME` | Name of the AI assistant | Yes |
 | `MEETING_URL` | The meeting link to join | Yes |
 
 ## Architecture
