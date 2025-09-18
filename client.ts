@@ -65,7 +65,7 @@ let odooTools: Record<string, ToolDefinition> = {};
 let mcp1: any;
 let messages: Message[] = [];
 let debounceTimer: NodeJS.Timeout | null = null;
-const DEBOUNCE_DELAY = 2000;
+const DEBOUNCE_DELAY = 2500;
 
 const mcp1url = new URL("https://nextjs-mcp-server-eta.vercel.app/api/mcp1/mcp");
 
@@ -114,6 +114,7 @@ async function main() {
       sessionId: "session_123",
     }),
   });
+  console.log("✅ Connected to weather and time MCP");
 
   odooTools = await mcp1.tools();
 
@@ -122,6 +123,7 @@ async function main() {
   );
 
   await client.connect(transport);
+  console.log("✅ Connected to Joinly MCP");
 
   const toolsResult = await client.listTools();
   wrappedTools = Object.fromEntries(
@@ -144,10 +146,12 @@ async function main() {
       }),
     ])
   );
-  console.log("Available tools:", JSON.stringify(toolsResult));
+  // console.log("Available tools:", JSON.stringify(toolsResult));
 
-  const resources = await client.listResources();
-  console.log("Available resources:", resources);
+  // const resources = await client.listResources();
+  // console.log("Available resources:", resources);
+
+  console.log("Joining meeting...");
 
   await client.callTool({
     name: "join_meeting",
@@ -203,7 +207,7 @@ async function main() {
     } catch (error) {
       console.error("Error reading:", error);
     }
-  }, 1000);
+  }, 500);
 
   // Keep alive
   await new Promise(() => {});
@@ -226,7 +230,7 @@ process.on("SIGINT", async () => {
     console.log("✅ Disconnected from Joinly MCP");
 
     await mcp1.close();
-    console.log("✅ Disconnected from Oodo MCP");
+    console.log("✅ Disconnected from weather and time MCP");
   }
   process.exit(0);
 });
