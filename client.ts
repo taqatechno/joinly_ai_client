@@ -13,21 +13,22 @@ dotenv.config();
 
 const systemPrompt = `
 ## Persona
-You are ${process.env.AGENT_NAME}, a casual meeting participant, joining as if you are another user in the room.  
+You are \${process.env.AGENT_NAME}, a casual meeting participant, joining as if you are another user in the room.  
 Your speaking style is natural, friendly, and conversational, but always brief. You are not a formal assistant — you are simply another participant in the meeting.  
 
 ## Behavior
 - Your responses are converted directly into speech and heard aloud by others in real time.  
-- You speak only when explicitly addressed by your name: ${process.env.AGENT_NAME}.  
+- You should only respond when it is clear from context that someone is addressing you. This may be explicit (your name \${process.env.AGENT_NAME} is spoken) or implicit (the user began their turn by addressing you and continues without repeating your name).  
 - When you do respond, you sound like a real participant: concise, to the point, and easy to follow.  
 - You elaborate only when someone specifically asks you to explain or expand.  
 
 ## Rules
-1. If you are **not** addressed by name, your entire response must be empty (\`""\` or a single space).  
+1. If you are not being addressed (either directly or in context), your entire response must be empty (\`""\` or a single space).  
 2. Never output placeholders, explanations, or the word \`"SILENCE"\`.  
-3. Keep your answers short and conversational, as if you are talking, not writing.  
-4. Only provide more detail if explicitly asked.  
-5. Always remember your output will be spoken aloud to others in the meeting.  
+3. Always judge whether the message is part of an ongoing request directed at you.  
+4. Keep your answers short and conversational, as if you are talking, not writing.  
+5. Only provide more detail if explicitly asked.  
+6. Always remember your output will be spoken aloud to others in the meeting.  
 `;
 
 interface Segment {
@@ -66,10 +67,13 @@ let mcp1: any;
 let messages: Message[] = [];
 let debounceTimer: NodeJS.Timeout | null = null;
 const DEBOUNCE_DELAY = 2500;
+let transcript_id = 0;
 
-const mcp1url = new URL("https://nextjs-mcp-server-eta.vercel.app/api/mcp1/mcp");
+const mcp1url = new URL(
+  "https://nextjs-mcp-server-eta.vercel.app/api/mcp1/mcp"
+);
 
-async function onDebounceTrigger() {
+async function onDebounceTrigger(ai_id: number = 0) {
   try {
     console.log("🤖 Generating AI response...");
     const { text } = await generateText({
@@ -79,26 +83,24 @@ async function onDebounceTrigger() {
       tools: { ...wrappedTools, ...odooTools },
       stopWhen: stepCountIs(10),
       onStepFinish: (step) => {
-        console.log(`🤖 AI is speaking`);
-        client.callTool({
-          name: "speak_text",
-          arguments: { text: step.text },
-        });
+        console.log(`🤖 AI Step Complete`);
       },
     });
 
-    messages.push({ role: "assistant", content: text });
+    if (ai_id === transcript_id) {
+      console.log(`🤖 AI is speaking`);
+      client.callTool({
+        name: "speak_text",
+        arguments: { text: text },
+      });
 
-    // console.log(`🤖 AI is speaking`);
-    // await client.callTool({
-    //   name: "speak_text",
-    //   arguments: { text: text },
-    // })
-    // console.log(`🤖 AI done speaking`);
-
-    console.log(`🤖 Assistant: ${text}`);
+      messages.push({ role: "assistant", content: text });
+      console.log(`🤖 Assistant: ${text}`);
+    } else {
+      console.log(`🔴 AI response skipped due to newer input`);
+    }
   } catch (error) {
-    console.error("Error generating AI response:", error);
+    console.error("🔴 Error generating AI response:", error);
   }
 }
 
@@ -182,10 +184,12 @@ async function main() {
 
       // Check if new segments were added
       if (segments.length > lastSegmentCount) {
+        transcript_id++;
+
         // Get only the new segments
         const newSegments = segments.slice(lastSegmentCount);
 
-        console.log(`📝 ${newSegments.length} new segment(s):`);
+        console.log(`📝 id:${transcript_id} :new segment(s):`);
 
         // Add each new segment to messages array immediately
         newSegments.forEach((seg: Segment) => {
@@ -199,7 +203,7 @@ async function main() {
         // Debounce logic
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-          onDebounceTrigger();
+          onDebounceTrigger(transcript_id);
         }, DEBOUNCE_DELAY);
 
         lastSegmentCount = segments.length;
